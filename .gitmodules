@@ -1,0 +1,3 @@
+[submodule "KMUtils"]
+	path = KMUtils
+	url = https://github.com/zvi-man/AIUtils.git
