@@ -1,4 +1,3 @@
-from time import sleep
 import cv2
 from datetime import datetime
 import matplotlib.pyplot as plt
