@@ -1,7 +1,7 @@
 import os
 from typing import Callable, Tuple
 from torchvision.io import read_image
-from torchvision.models import resnet50, ResNet50_Weights
+from torchvision.models import resnet50, ResNet50_Weights, resnet18, ResNet18_Weights, ResNet34_Weights, resnet34
 import torch
 from torchsummary import summary
 
@@ -15,14 +15,14 @@ RESNET_INPUT_SHAPE = (3, 224, 224)
 class Resnet50LSTM(torch.nn.Module):
     def __init__(self) -> None:
         super().__init__()
-        weights = ResNet50_Weights.DEFAULT
-        full_resnet50 = resnet50(weights=weights)
-        self.resnet50_without_last_layer = torch.nn.Sequential(*(list(full_resnet50.children())[:-1]))
+        weights = ResNet18_Weights.DEFAULT
+        full_resnet = resnet18(weights=weights)
+        self.resnet_without_last_layer = torch.nn.Sequential(*(list(full_resnet.children())[:-1]))
         # self.resnet50 = resnet50()
-        self.fc = torch.nn.Linear(in_features=2048, out_features=2)
+        self.fc = torch.nn.Linear(in_features=512, out_features=2)
 
     def forward(self, x):
-        x = self.resnet50_without_last_layer(x)
+        x = self.resnet_without_last_layer(x)
         x = torch.nn.Flatten()(x)
         print(x.shape)
         return self.fc(x)
