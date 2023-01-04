@@ -39,17 +39,28 @@ def predict_most_common_lp(single_tracklet_table: pd.DataFrame) -> str:
     return value_counts.index[0]
 
 
+COMMON_LP_THRESH_HOLD = 0.7
+
+
 def predict_most_common_lp_conditioned(single_tracklet_table: pd.DataFrame) -> str:
     value_counts = single_tracklet_table[SINGLE_IMG_LP_COL].value_counts(sort=True)
     if value_counts[0] == value_counts[1]:
         return LP_PREDICTION_UNCERTAIN
-    if value_counts[0] / single_tracklet_table.shape[0] < 0.7:
+    if value_counts[0] / single_tracklet_table.shape[0] < COMMON_LP_THRESH_HOLD:
         return LP_PREDICTION_UNCERTAIN
     return value_counts.index[0]
 
 
+CONFIDENCE_THRESH_HOLD = 0.5
+
+
 def predict_lp_top_confidence(single_tracklet_table: pd.DataFrame) -> str:
-    pass
+    max_line = single_tracklet_table[SINGLE_IMG_LP_CONFIDENCE_COL].idxmax()
+    confidence = single_tracklet_table[SINGLE_IMG_LP_CONFIDENCE_COL].max()
+    if confidence < CONFIDENCE_THRESH_HOLD:
+        return LP_PREDICTION_UNCERTAIN
+    else:
+        return single_tracklet_table[SINGLE_IMG_LP_COL][max_line]
 
 
 def predict_lp_size_and_confidence(single_tracklet_table: pd.DataFrame) -> str:
@@ -58,7 +69,7 @@ def predict_lp_size_and_confidence(single_tracklet_table: pd.DataFrame) -> str:
 
 class TrackletLPRPredictor(object):
     @classmethod
-    def calc_prediction_accuracy(cls, pred: Callable, table: pd.DataFrame) -> Tuple[float, float]:
+    def calc_prediction_precision_recall(cls, pred: Callable, table: pd.DataFrame) -> Tuple[float, float]:
         tracklet_ids = cls.get_all_possible_tracklet_ids(table)
         num_evaluated_tracklets = 0
         num_correct_tracklets = 0
@@ -110,11 +121,11 @@ def load_lp_table(csv_path: str) -> pd.DataFrame:
 if __name__ == '__main__':
     lp_table_csv_path = "build_dataset/lp_table.csv"
     lp_table = load_lp_table(lp_table_csv_path)
-    precision, recall = TrackletLPRPredictor.calc_prediction_accuracy(predict_lp_of_biggest_car, lp_table)
+    precision, recall = TrackletLPRPredictor.calc_prediction_precision_recall(predict_lp_of_biggest_car, lp_table)
     print(f"biggest_car precision, recall: {precision}, {recall}")
-    precision, recall = TrackletLPRPredictor.calc_prediction_accuracy(predict_most_common_lp, lp_table)
+    precision, recall = TrackletLPRPredictor.calc_prediction_precision_recall(predict_most_common_lp, lp_table)
     print(f"most_common_lp precision, recall: {precision}, {recall}")
-    precision, recall = TrackletLPRPredictor.calc_prediction_accuracy(predict_most_common_lp_conditioned, lp_table)
+    precision, recall = TrackletLPRPredictor.calc_prediction_precision_recall(predict_most_common_lp_conditioned, lp_table)
     print(f"most_common_lp_conditioned precision, recall: {precision}, {recall}")
-    # biggest_car_acc = TrackletLPRPredictor.calc_prediction_accuracy(predict_lp_of_biggest_car, lp_table)
-    # biggest_car_acc = TrackletLPRPredictor.calc_prediction_accuracy(predict_lp_of_biggest_car, lp_table)
+    precision, recall = TrackletLPRPredictor.calc_prediction_precision_recall(predict_lp_top_confidence, lp_table)
+    print(f"predict_lp_top_confidence precision, recall: {precision}, {recall}")
