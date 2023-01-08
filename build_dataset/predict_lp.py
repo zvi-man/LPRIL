@@ -130,18 +130,15 @@ if __name__ == '__main__':
     precision, recall = Img2TrackletRecognitionPredictor.calc_prediction_precision_recall_point(
         predict_tracklet_by_img_size, lp_table)
     print(f"biggest_car precision, recall: {precision}, {recall}")
-    # PlotUtils.plot_precision_recall_curve(precision, recall, title='most_common_lp_conditioned')
     pr_dict["biggest_car"] = [precision, recall]
 
     precision, recall = Img2TrackletRecognitionPredictor.calc_prediction_precision_recall_curve(
         predict_tracklet_by_most_common, lp_table, list(np.linspace(0, 1, 10)))
-    # PlotUtils.plot_precision_recall_curve(precision, recall, title='most_common_lp_conditioned')
     pr_dict["most_common_lp"] = [precision, recall]
     print(f"most_common_lp precision, recall: {precision}, {recall}")
 
     precision, recall = Img2TrackletRecognitionPredictor.calc_prediction_precision_recall_curve(
         predict_lp_top_confidence, lp_table, list(np.linspace(0, 1, 10)))
-    # PlotUtils.plot_precision_recall_curve(precision, recall, title='predict_lp_top_confidence')
     pr_dict["predict_lp_top_confidence"] = [precision, recall]
     print(f"predict_lp_top_confidence precision, recall: {precision}, {recall}")
 
