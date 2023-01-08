@@ -29,15 +29,8 @@ def predict_tracklet_by_img_size(single_tracklet_table: pd.DataFrame) -> str:
     return single_tracklet_table[SINGLE_IMG_LP_COL][max_line]
 
 
-def predict_tracklet_by_cost_common(single_tracklet_table: pd.DataFrame) -> str:
-    value_counts = single_tracklet_table[SINGLE_IMG_LP_COL].value_counts(sort=True)
-    if len(value_counts) > 1 and value_counts[0] == value_counts[1]:
-        return ''
-    return value_counts.index[0]
-
-
-def predict_tracklet_by_most_common_conditioned(single_tracklet_table: pd.DataFrame,
-                                                common_lp_thresh_hold: float = COMMON_LP_THRESH_HOLD) -> str:
+def predict_tracklet_by_most_common(single_tracklet_table: pd.DataFrame,
+                                    common_lp_thresh_hold: float = COMMON_LP_THRESH_HOLD) -> str:
     value_counts = single_tracklet_table[SINGLE_IMG_LP_COL].value_counts(sort=True)
     if len(value_counts) > 1 and value_counts[0] == value_counts[1]:
         return ''
@@ -101,6 +94,7 @@ class Img2TrackletRecognitionPredictor(object):
         for threshold in threshold_list:
             def single_point_pred(my_table: pd.DataFrame) -> str:
                 return pred(my_table, threshold)
+
             point_precision, point_recall = cls.calc_prediction_precision_recall_point(single_point_pred, table)
             precision_results.append(point_precision)
             recall_results.append(point_recall)
@@ -132,20 +126,23 @@ if __name__ == '__main__':
     lp_table_csv_path = "build_dataset/lp_table.csv"
     lp_table = pd.read_csv(lp_table_csv_path)
 
+    pr_dict = {}
     precision, recall = Img2TrackletRecognitionPredictor.calc_prediction_precision_recall_point(
         predict_tracklet_by_img_size, lp_table)
     print(f"biggest_car precision, recall: {precision}, {recall}")
+    # PlotUtils.plot_precision_recall_curve(precision, recall, title='most_common_lp_conditioned')
+    pr_dict["biggest_car"] = [precision, recall]
 
-    precision, recall = Img2TrackletRecognitionPredictor.calc_prediction_precision_recall_point(
-        predict_tracklet_by_cost_common, lp_table)
+    precision, recall = Img2TrackletRecognitionPredictor.calc_prediction_precision_recall_curve(
+        predict_tracklet_by_most_common, lp_table, list(np.linspace(0, 1, 10)))
+    # PlotUtils.plot_precision_recall_curve(precision, recall, title='most_common_lp_conditioned')
+    pr_dict["most_common_lp"] = [precision, recall]
     print(f"most_common_lp precision, recall: {precision}, {recall}")
 
     precision, recall = Img2TrackletRecognitionPredictor.calc_prediction_precision_recall_curve(
-        predict_tracklet_by_most_common_conditioned, lp_table, list(np.linspace(0, 1, 10)))
-    PlotUtils.plot_precision_recall_curve(precision, recall, title='most_common_lp_conditioned')
-    print(f"most_common_lp_conditioned precision, recall: {precision}, {recall}")
-
-    precision, recall = Img2TrackletRecognitionPredictor.calc_prediction_precision_recall_curve(
         predict_lp_top_confidence, lp_table, list(np.linspace(0, 1, 10)))
-    PlotUtils.plot_precision_recall_curve(precision, recall, title='predict_lp_top_confidence')
+    # PlotUtils.plot_precision_recall_curve(precision, recall, title='predict_lp_top_confidence')
+    pr_dict["predict_lp_top_confidence"] = [precision, recall]
     print(f"predict_lp_top_confidence precision, recall: {precision}, {recall}")
+
+    PlotUtils.plot_multiple_precision_recall_curves(pr_dict)
