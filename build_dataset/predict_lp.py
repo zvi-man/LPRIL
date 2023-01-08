@@ -11,7 +11,6 @@ class Img2TrackletRecognitionPredictorException(Exception):
 
 # TODO:
 #  1. write functions to add size filter
-#  2. plot precision recall curves for all prediction options
 
 # Constants
 WIDTH_COL = "width"
@@ -34,7 +33,7 @@ def predict_tracklet_by_most_common(single_tracklet_table: pd.DataFrame,
     value_counts = single_tracklet_table[SINGLE_IMG_LP_COL].value_counts(sort=True)
     if len(value_counts) > 1 and value_counts[0] == value_counts[1]:
         return ''
-    if value_counts[0] / single_tracklet_table.shape[0] < common_lp_thresh_hold:
+    if value_counts[0] < common_lp_thresh_hold:
         return ''
     return value_counts.index[0]
 
@@ -55,7 +54,7 @@ def predict_lp_entropy(single_tracklet_table: pd.DataFrame) -> str:
 
 class Img2TrackletRecognitionPredictor(object):
     TRACKLET_ID_COL = "ID"
-    TRACKLET_GT_COL = "labeled_lp"
+    TRACKLET_GT_COL = "gt"
     UNLABELED_STR = "AAAAAA"
     PREDICTION_UNCERTAIN = ''
 
@@ -133,7 +132,7 @@ if __name__ == '__main__':
     pr_dict["biggest_car"] = [precision, recall]
 
     precision, recall = Img2TrackletRecognitionPredictor.calc_prediction_precision_recall_curve(
-        predict_tracklet_by_most_common, lp_table, list(np.linspace(0, 1, 10)))
+        predict_tracklet_by_most_common, lp_table, list(range(5)))
     pr_dict["most_common_lp"] = [precision, recall]
     print(f"most_common_lp precision, recall: {precision}, {recall}")
 
