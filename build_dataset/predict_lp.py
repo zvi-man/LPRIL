@@ -31,7 +31,7 @@ def predict_tracklet_by_img_size(single_tracklet_table: pd.DataFrame) -> str:
 
 def predict_tracklet_by_cost_common(single_tracklet_table: pd.DataFrame) -> str:
     value_counts = single_tracklet_table[SINGLE_IMG_LP_COL].value_counts(sort=True)
-    if value_counts[0] == value_counts[1]:
+    if len(value_counts) > 1 and value_counts[0] == value_counts[1]:
         return ''
     return value_counts.index[0]
 
@@ -39,7 +39,7 @@ def predict_tracklet_by_cost_common(single_tracklet_table: pd.DataFrame) -> str:
 def predict_tracklet_by_most_common_conditioned(single_tracklet_table: pd.DataFrame,
                                                 common_lp_thresh_hold: float = COMMON_LP_THRESH_HOLD) -> str:
     value_counts = single_tracklet_table[SINGLE_IMG_LP_COL].value_counts(sort=True)
-    if value_counts[0] == value_counts[1]:
+    if len(value_counts) > 1 and value_counts[0] == value_counts[1]:
         return ''
     if value_counts[0] / single_tracklet_table.shape[0] < common_lp_thresh_hold:
         return ''
