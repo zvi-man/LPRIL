@@ -11,7 +11,6 @@ class Img2TrackletRecognitionPredictorException(Exception):
 
 # TODO:
 #  1. write functions to add size filter
-#  2. plot precision recall curves for all prediction options
 
 # Constants
 WIDTH_COL = "width"
