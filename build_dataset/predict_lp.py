@@ -1,7 +1,8 @@
-from typing import Callable, Tuple, List
+import itertools
+from typing import Callable, Tuple, List, Dict
 import pandas as pd
 import numpy as np
-
+from sklearn.metrics import auc
 from KMUtils.GeneralUtils.plot_utils import PlotUtils
 
 
@@ -18,6 +19,8 @@ HEIGHT_COL = "height"
 SINGLE_IMG_LP_COL = "single_img_lp"
 SINGLE_IMG_LP_CONFIDENCE_COL = "single_img_lp_confidence"
 PREDICTION_LP_COL = "prediction_lp"
+PRECISION_COL = "precision"
+RECALL_COL = "recall"
 COMMON_LP_THRESH_HOLD = 0.7
 
 
@@ -48,8 +51,21 @@ def predict_lp_top_confidence(single_tracklet_table: pd.DataFrame,
         return single_tracklet_table[SINGLE_IMG_LP_COL][max_line]
 
 
-def predict_lp_entropy(single_tracklet_table: pd.DataFrame) -> str:
-    pass
+def predict_lp_size_conf_comm(single_tracklet_table: pd.DataFrame,
+                              confidence_thresh_hold: float,
+                              min_car_area: int) -> str:
+    car_area_col = "car_pixel_count"
+    s_t_table = single_tracklet_table  # give shorter name
+    s_t_table[car_area_col] = s_t_table[HEIGHT_COL] * s_t_table[WIDTH_COL]
+    sub_table = s_t_table.loc[(s_t_table[car_area_col] > min_car_area) &
+                              (s_t_table[SINGLE_IMG_LP_CONFIDENCE_COL] > confidence_thresh_hold)]
+    # select most common
+    value_counts = single_tracklet_table[SINGLE_IMG_LP_COL].value_counts(sort=True)
+    if len(value_counts) == 0:
+        return ''
+    if len(value_counts) > 1 and value_counts[0] == value_counts[1]:
+        return ''
+    return value_counts.index[0]
 
 
 class Img2TrackletRecognitionPredictor(object):
@@ -100,6 +116,29 @@ class Img2TrackletRecognitionPredictor(object):
         return precision_results, recall_results
 
     @classmethod
+    def calc_prediction_precision_recall_matrix(cls, pred: Callable,
+                                                table: pd.DataFrame,
+                                                threshold_dict: Dict[str, List[float]]) -> pd.DataFrame:
+        parameter_names_list = threshold_dict.keys()
+        parameter_values = [threshold_dict[param] for param in parameter_names_list]
+        df_results = pd.DataFrame(list(itertools.product(*parameter_values)),
+                                  columns=parameter_names_list)
+        df_results[PRECISION_COL] = 0.0
+        df_results[RECALL_COL] = 0.0
+        for index, row in df_results.iterrows():
+            parameter_val_dict = {param: row[param] for param in parameter_names_list}
+
+            def single_point_pred(my_table: pd.DataFrame) -> str:
+                return pred(my_table, **parameter_val_dict)
+            print(parameter_val_dict)
+            point_precision, point_recall = cls.calc_prediction_precision_recall_point(single_point_pred, table)
+            if point_precision != 0.0 or point_recall != 0.0:
+                print(f"{point_precision}, {point_recall}")
+            df_results.at[index, PRECISION_COL] = point_precision
+            df_results.at[index, RECALL_COL] = point_recall
+        return df_results
+
+    @classmethod
     def get_all_possible_tracklet_ids(cls, table: pd.DataFrame):
         return set(table[cls.TRACKLET_ID_COL].to_list())
 
@@ -129,16 +168,25 @@ if __name__ == '__main__':
     precision, recall = Img2TrackletRecognitionPredictor.calc_prediction_precision_recall_point(
         predict_tracklet_by_img_size, lp_table)
     print(f"biggest_car precision, recall: {precision}, {recall}")
-    pr_dict["biggest_car"] = [precision, recall]
+    pr_dict["biggest_car"] = (precision, recall)
 
     precision, recall = Img2TrackletRecognitionPredictor.calc_prediction_precision_recall_curve(
         predict_tracklet_by_most_common, lp_table, list(range(5)))
-    pr_dict["most_common_lp"] = [precision, recall]
+    pr_dict["most_common_lp"] = (precision, recall)
     print(f"most_common_lp precision, recall: {precision}, {recall}")
+    print(f"most_common_lp AP: {auc(recall, precision)}")
 
     precision, recall = Img2TrackletRecognitionPredictor.calc_prediction_precision_recall_curve(
         predict_lp_top_confidence, lp_table, list(np.linspace(0, 1, 10)))
-    pr_dict["predict_lp_top_confidence"] = [precision, recall]
+    pr_dict["predict_lp_top_confidence"] = (precision, recall)
     print(f"predict_lp_top_confidence precision, recall: {precision}, {recall}")
+    print(f"predict_lp_top_confidence AP: {auc(recall, precision)}")
 
+    threshold_dict = {'confidence_thresh_hold': list(np.linspace(0, 1, 10)),
+                      'min_car_area': list(range(100, 1000, 100))}
+    df = Img2TrackletRecognitionPredictor.calc_prediction_precision_recall_matrix(predict_lp_size_conf_comm,
+                                                                                  lp_table,
+                                                                                  threshold_dict)
+
+    print(df)
     PlotUtils.plot_multiple_precision_recall_curves(pr_dict)
