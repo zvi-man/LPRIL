@@ -12,13 +12,12 @@ TOP_LEFT_Y_COL = "top_r"
 WIDTH_COL = "width"
 HEIGHT_COL = "height"
 FRAME_COL = "frame"
-BLUE = (0, 255, 0)
-BBOX_COLOR = BLUE
+GREEN = (0, 255, 0)
+BBOX_COLOR = GREEN
 BBOX_LINE_WIDTH = 2
 TEXT_LINE_WIDTH = 2
 TEXT_SIZE = 0.5
-TEXT_COLOR = BLUE
-
+TEXT_COLOR = GREEN
 
 
 def get_video_info(vid_path: str) -> Tuple[int, float, Tuple[int, int]]:
@@ -65,7 +64,7 @@ def create_yolo_video(vid_path: str, csv_table_path: str, output_vid_path: str =
             xmin, ymin = x, y
             xmax, ymax = x + w, y + h
             cv2.rectangle(frame, (xmin, ymin), (xmax, ymax), BBOX_COLOR, BBOX_LINE_WIDTH)
-            cv2.putText(frame, obj[col_to_print], (xmin, ymin - 10), cv2.FONT_HERSHEY_SIMPLEX, TEXT_SIZE, TEXT_COLOR, TEXT_LINE_WIDTH)
+            cv2.putText(frame, str(obj[col_to_print]), (xmin, ymin - 10), cv2.FONT_HERSHEY_SIMPLEX, TEXT_SIZE, TEXT_COLOR, TEXT_LINE_WIDTH)
 
         # Write the frame to the output video
         out.write(frame)
@@ -76,6 +75,6 @@ def create_yolo_video(vid_path: str, csv_table_path: str, output_vid_path: str =
 
 
 if __name__ == '__main__':
-    video_path = r"/home/zvi/Projects/DeepVehicleColorClassification/RawVideos/drive1.mp4"
-    csv_path = "lp_table.csv"
+    video_path = r"/home/zvi/Projects/DeepVehicleColorClassification/RawVideos/TEL AVIV Driving in ISRAEL 2021 4K • נסיעה בתל אביב.mp4"
+    csv_path = "data.csv"
     create_yolo_video(video_path, csv_path, output_vid_path='./output.mp4')
