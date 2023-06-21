@@ -6,7 +6,7 @@ from PIL import Image, ImageTk
 
 # Constants
 DEFAULT_CSV_PATH = r"images.csv"
-DEFAULT_IMG_DIR = r"D:\עבודה צבי\VehicleColorClassification\DataSets\HomeMade1\raanana\car_images"
+DEFAULT_IMG_DIR = r"/home/zvi/Desktop/BurnToDisk/test_car"
 IMAGE_NAME_COL = 'file_name'
 IMAGE_COLOR_COL = "color"
 IMAGE_MAKE_COL = "make"
